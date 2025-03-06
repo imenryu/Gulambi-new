@@ -1,34 +1,33 @@
-name: Auto Format Code
+name: Format Code
 
 on:
   push:
     branches:
-      - main
+      - main  # or your default branch
   pull_request:
+    branches:
+      - main
 
 jobs:
   format:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
-      - name: Install black
-        run: pip install black
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-      - name: Run black
+      - name: Run Black formatter
         run: black .
 
-      - name: Commit changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "🔧 Auto-formatted code using Black" || exit 0
-          git push
+      - name: Commit formatted code
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Auto-formatted code with Black"
