@@ -577,21 +577,29 @@ class PokemonHuntingEngine:
             await self._transmit_hunt_command()
 
     async def pokeSwitch(self, event: events.MessageEdited.Event) -> None:
-        """Automatically switches Pokémon in battle in order (not random)."""
+        """Automatically switches Pokémon in battle in order, retrying up to 4 times if ignored."""
         substring = 'Choose your next pokemon.'
         if (
             substring in event.raw_text and
             self.automation_orchestrator.is_automation_active
         ):
             for button in constants.POKEMON_TEAM:  # Iterate over Pokémon team in order
-                try:
-                    await event.click(text=button)  # Click first available Pokémon
-                    logger.info(f"Switched to Pokémon: {button}")
-                    break  # Stop looping after first successful switch
-                except MessageIdInvalidError:
-                    logger.exception(f'Failed to click button: `{button}`')
-                except Exception as e:
-                    logger.exception(f"Unexpected error switching Pokémon: {e}")
+                retries = 4  # Max 4 attempts
+                for attempt in range(retries):
+                    try:
+                        await event.click(text=button)  # Attempt to switch Pokémon
+                        logger.info(f"Switched to Pokémon: {button} (Attempt {attempt + 1})")
+                        return  # Exit function if successful
+                    except MessageIdInvalidError:
+                        logger.exception(f'Failed to click button: `{button}` (Attempt {attempt + 1})')
+                    except Exception as e:
+                        logger.exception(f"Unexpected error switching Pokémon: {e} (Attempt {attempt + 1})")
+
+                    if attempt < retries - 1:  # Don't sleep after the last attempt
+                        logger.warning(f"Retrying Pokémon switch in 3 seconds... (Attempt {attempt + 2})")
+                        await asyncio.sleep(3)  # Wait 3 seconds before retrying
+
+            logger.error("All attempts to switch Pokémon failed.")  # If all attempts fail
 
     @property
     def event_handlers(self) -> List[Dict[str, Callable | events.NewMessage]]:
@@ -604,4 +612,4 @@ class PokemonHuntingEngine:
             {'callback': self.handle_after_battle, 'event': events.MessageEdited(chats=constants.HEXA_BOT_ID)},
             {'callback': self.skip, 'event': events.NewMessage(chats=constants.HEXA_BOT_ID)},
             {'callback': self.pokeSwitch, 'event': events.MessageEdited(chats=constants.HEXA_BOT_ID)}
-            ]
+        ]
