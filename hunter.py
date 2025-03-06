@@ -483,7 +483,7 @@ class PokemonHuntingEngine:
 
             if wild_pokemon_hp_match:
                 wild_max_hp = int(wild_pokemon_hp_match.group(2))
-                if wild_max_hp <= 50:
+                if wild_max_hp <= 100:
                     logger.debug(f"{pok_name} is low level (HP: {wild_max_hp}), using Poke Balls directly.")
                     await asyncio.sleep(constants.COOLDOWN())
                     try:
@@ -515,13 +515,13 @@ class PokemonHuntingEngine:
                 wild_max_hp = int(wild_pokemon_hp_match.group(2))
                 wild_current_hp = int(wild_pokemon_hp_match.group(1))
                 wild_health_percentage = self._calculate_health_percentage(wild_max_hp, wild_current_hp)
-                if wild_health_percentage > 50:
+                if wild_health_percentage > 60:
                     await asyncio.sleep(1)
                     try:
                         await event.click(0, 0)
                     except MessageIdInvalidError:
                         logger.exception(f"Failed to click the button for {pok_name} with high health")
-                elif wild_health_percentage <= 50:
+                elif wild_health_percentage <= 60:
                     await asyncio.sleep(1)
                     try:
                         await event.click(text="Poke Balls")
@@ -547,7 +547,7 @@ class PokemonHuntingEngine:
 
         if any(
               substring in event.raw_text for substring
-              in ["fled", "fainted", "🥚", "You caught"]
+              in ["fled", "💵", "You caught"]
            ):
             pd_match = regex.search(r"\+(\d+) 💵", event.raw_text)
             if pd_match:
@@ -576,20 +576,22 @@ class PokemonHuntingEngine:
             self.activity_monitor.record_activity(activity_type=ActivityType.ITEM_FOUND, value=f"{stone.capitalize()} stone")
             await self._transmit_hunt_command()
 
-  
-    async def pokeSwitch(self, event):
+    async def pokeSwitch(self, event: events.MessageEdited.Event) -> None:
+        """Automatically switches Pokémon in battle in order (not random)."""
         substring = 'Choose your next pokemon.'
         if (
             substring in event.raw_text and
             self.automation_orchestrator.is_automation_active
-           ):
-            buttons_to_click = constants.POKEMON_TEAM
-            for button in buttons_to_click:
-               try:
-                   await event.click(text=button)
-               except MessageIdInvalidError:
-                   logger.exception(f'Failed to click button: `{button}`')
-
+        ):
+            for button in constants.POKEMON_TEAM:  # Iterate over Pokémon team in order
+                try:
+                    await event.click(text=button)  # Click first available Pokémon
+                    logger.info(f"Switched to Pokémon: {button}")
+                    break  # Stop looping after first successful switch
+                except MessageIdInvalidError:
+                    logger.exception(f'Failed to click button: `{button}`')
+                except Exception as e:
+                    logger.exception(f"Unexpected error switching Pokémon: {e}")
 
     @property
     def event_handlers(self) -> List[Dict[str, Callable | events.NewMessage]]:
