@@ -438,37 +438,6 @@ class PokemonHuntingEngine:
             logger.warning(f"[{self.__class__.__name__}] @{self._client.me.username}'s {warning}")
 
 
-    async def click_pokeball(self, event):
-        """Tries clicking 'Poke Balls' and selects an available Poké Ball. If none are available, retries after 60s."""
-
-        if not self.automation_orchestrator.is_automation_active:
-            return  # Stop execution if hunt is not active
-
-        try:
-            # Click "Poke Balls" button
-            await event.click(text="Poke Balls")
-            logger.info("Clicked 'Poke Balls' button.")
-            await asyncio.sleep(1)  # Wait for UI update
-
-            # Try clicking one of the available Poké Balls
-            for ball in ["Regular", "Repeat"]:
-                try:
-                    await event.click(text=ball)
-                    logger.info(f"Clicked '{ball}' Poké Ball.")
-                    return
-                except Exception:
-                    continue  # If button not found, try the next one
-
-            # If no Poké Ball is available, wait 60 seconds and retry
-            logger.warning("No Poké Ball available to click. Retrying in 60 seconds.")
-            await asyncio.sleep(60)
-
-            if self.automation_orchestrator.is_automation_active:
-                await self._transmit_hunt_command()  # Retry hunt after cooldown
-        except Exception as e:
-            logger.warning(f"Failed to click 'Poke Balls': {e}")
-
-
     
     async def hunt_or_pass(self, event: events.NewMessage.Event) -> None:
         """Handles wild Pokemon encounters, deciding to hunt or pass based on config."""
