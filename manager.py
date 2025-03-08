@@ -12,7 +12,8 @@ from afk import AFKManager
 from alive import AliveHandler
 from release import PokemonReleaseManager
 from spam import SpamManager
-from purge import PurgeManager  # Import PurgeManager
+from purge import PurgeManager
+from clone import CloneManager  # Import CloneManager
 
 HELP_MESSAGE = """**Help**
 
@@ -29,6 +30,8 @@ HELP_MESSAGE = """**Help**
 • `.delayspam <msg> <count> <delay>` - Spam with delay
 • `.stopspam` - Stop ongoing spam or delayed spam
 • `.purge <count>` - Deletes the last `<count>` messages
+• `.clone` - Clone a user's profile (name, bio, username, and PFP)
+• `.revert` - Restore your original profile and remove cloned PFP
 """
 
 class Manager:
@@ -43,7 +46,8 @@ class Manager:
         '_alive_handler',
         '_release_manager',
         '_spam_manager',
-        '_purge_manager'  # Added PurgeManager
+        '_purge_manager',
+        '_clone_manager'  # Added CloneManager
     )
 
     def __init__(self, client) -> None:
@@ -55,7 +59,8 @@ class Manager:
         self._alive_handler = AliveHandler(client)
         self._release_manager = PokemonReleaseManager(client)
         self._spam_manager = SpamManager(client)
-        self._purge_manager = PurgeManager(client)  # Initialize PurgeManager
+        self._purge_manager = PurgeManager(client)
+        self._clone_manager = CloneManager(client)  # Initialize CloneManager
 
     def start(self) -> None:
         """Starts the Userbot's automations."""
@@ -88,7 +93,7 @@ class Manager:
 
     @property
     def event_handlers(self) -> List[Dict[str, Callable | events.NewMessage]]:
-        """Returns a list of event handlers, including release, spam, and purge commands."""
+        """Returns a list of event handlers, including clone, revert, release, spam, and purge commands."""
         return [
             {'callback': self.ping_command, 'event': events.NewMessage(pattern=constants.PING_COMMAND_REGEX, outgoing=True)},
             {'callback': self.help_command, 'event': events.NewMessage(pattern=constants.HELP_COMMAND_REGEX, outgoing=True)},
@@ -101,5 +106,7 @@ class Manager:
             {'callback': self._spam_manager.spam, 'event': events.NewMessage(pattern=r"\.spam (.+) (\d+)", outgoing=True)},
             {'callback': self._spam_manager.delay_spam, 'event': events.NewMessage(pattern=r"\.delayspam (.+) (\d+) (\d+)", outgoing=True)},
             {'callback': self._spam_manager.stop_spam, 'event': events.NewMessage(pattern=r"\.stopspam$", outgoing=True)},
-            {'callback': self._purge_manager.purge_messages, 'event': events.NewMessage(pattern=r"\.purge (\d+)", outgoing=True)},  # Added purge command
+            {'callback': self._purge_manager.purge_messages, 'event': events.NewMessage(pattern=r"\.purge (\d+)", outgoing=True)},
+            {'callback': self._clone_manager.clone, 'event': events.NewMessage(pattern=r"\.clone$", outgoing=True)},  # Added clone command
+            {'callback': self._clone_manager.revert, 'event': events.NewMessage(pattern=r"\.revert$", outgoing=True)},  # Added revert command
         ]
