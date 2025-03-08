@@ -26,6 +26,7 @@ HELP_MESSAGE = """**Help**
 • `.release` - Release Pokémon commands
 • `.spam <msg> <count>` - Spam message multiple times
 • `.delayspam <msg> <count> <delay>` - Spam with delay
+• `.stopspam` - Stop ongoing spam or delayed spam
 """
 
 class Manager:
@@ -95,4 +96,5 @@ class Manager:
             {'callback': self._release_manager.list_pokemon, 'event': events.NewMessage(pattern=r"\.release list", outgoing=True)},
             {'callback': self._spam_manager.spam, 'event': events.NewMessage(pattern=r"\.spam (.+) (\d+)", outgoing=True)},
             {'callback': self._spam_manager.delay_spam, 'event': events.NewMessage(pattern=r"\.delayspam (.+) (\d+) (\d+)", outgoing=True)},
+            {'callback': self._spam_manager.stop_spam, 'event': events.NewMessage(pattern=r"\.stopspam$", outgoing=True)},  # Added stop command
         ]
