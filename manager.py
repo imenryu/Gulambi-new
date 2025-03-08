@@ -22,8 +22,7 @@ HELP_MESSAGE = """**Help**
 • `.list <category>` - List Pokémon by category
 • `.afk` (message) - Set AFK status
 • `.unafk` - Disable AFK status
-• `.release on` - Start auto-releasing Pokémon
-• `.release off` - Stop auto-releasing Pokémon
+• `.release` - Release Pokémon commands
 """
 
 class Manager:
@@ -77,62 +76,16 @@ class Manager:
         """Handles the `.help` command."""
         await event.edit(HELP_MESSAGE)
 
-    async def handle_guesser_automation_control_request(self, event) -> None:
-        """Handles user requests to enable/disable guesser automation."""
-        await self._guesser.handle_automation_control_request(event)
-
-    async def handle_hunter_automation_control_request(self, event) -> None:
-        """Handles user requests to enable/disable hunter automation."""
-        await self._hunter.handle_automation_control_request(event)
-
-    async def list_pokemon(self, event) -> None:
-        """Handles the `.list` command by showing Pokémon based on the specified category."""
-        args = event.pattern_match.group(1)
-
-        categories = {
-            "regular": constants.REGULAR_BALL,
-            "repeat": constants.REPEAT_BALL,
-            "ultra": constants.ULTRA_BALL,
-            "great": constants.GREAT_BALL,
-            "nest": constants.NEST_BALL,
-            "safari": constants.SAFARI
-        }
-
-        if not args:  
-            await event.edit(
-                "**Usage:** `.list <category>`\n\n"
-                "**Available categories:**\n"
-                "- `regular`\n"
-                "- `repeat`\n"
-                "- `ultra`\n"
-                "- `great`\n"
-                "- `nest`\n"
-                "- `safari`"
-            )
-            return
-
-        category = args.lower()
-        if category not in categories:
-            await event.edit(f"**Invalid category!**\nUse one of: {', '.join(categories.keys())}")
-            return
-
-        pokemon_list = categories[category]
-        if not pokemon_list:
-            await event.edit(f"No Pokémon found in `{category}` category.")
-            return
-
-        formatted_list = ", ".join(sorted(pokemon_list))  
-        await event.edit(f"**{category.capitalize()} Ball Pokémon:**\n{formatted_list}")
-
     @property
     def event_handlers(self) -> List[Dict[str, Callable | events.NewMessage]]:
         """Returns a list of event handlers, including release commands."""
         return [
             {'callback': self.ping_command, 'event': events.NewMessage(pattern=constants.PING_COMMAND_REGEX, outgoing=True)},
             {'callback': self.help_command, 'event': events.NewMessage(pattern=constants.HELP_COMMAND_REGEX, outgoing=True)},
-            {'callback': self.handle_guesser_automation_control_request, 'event': events.NewMessage(pattern=constants.GUESSER_COMMAND_REGEX, outgoing=True)},
-            {'callback': self.handle_hunter_automation_control_request, 'event': events.NewMessage(pattern=constants.HUNTER_COMMAND_REGEX, outgoing=True)},
-            {'callback': self.list_pokemon, 'event': events.NewMessage(pattern=constants.LIST_COMMAND_REGEX, outgoing=True)},
-            {'callback': self._release_manager.start_releasing, 'event': events.NewMessage(pattern=r"\.release on", outgoing=True)},  
-            {'callback': self._release_manager.stop_releasing, 'event': events.NewMessage(pattern=r"\.release off", outgoing=True)}  
+            {'callback': self._release_manager.show_release_help, 'event': events.NewMessage(pattern=r"\.release$", outgoing=True)},
+            {'callback': self._release_manager.start_releasing, 'event': events.NewMessage(pattern=r"\.release on", outgoing=True)},
+            {'callback': self._release_manager.stop_releasing, 'event': events.NewMessage(pattern=r"\.release off", outgoing=True)},
+            {'callback': self._release_manager.add_pokemon, 'event': events.NewMessage(pattern=r"\.release add (.+)", outgoing=True)},
+            {'callback': self._release_manager.remove_pokemon, 'event': events.NewMessage(pattern=r"\.release remove (.+)", outgoing=True)},
+            {'callback': self._release_manager.list_pokemon, 'event': events.NewMessage(pattern=r"\.release list", outgoing=True)},
         ]
