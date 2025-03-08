@@ -15,6 +15,7 @@ from spam import SpamManager
 from purge import PurgeManager
 from clone import CloneManager
 from admin import AdminManager  # Import AdminManager
+from kang import KangManager  # Import KangManager
 
 HELP_MESSAGE = """**Help Menu**  
 
@@ -46,6 +47,7 @@ HELP_MESSAGE = """**Help Menu**
 • `.purge <count>` - Delete the last `<count>` messages  
 • `.clone` - Clone a user's profile (name, bio, username, and PFP)  
 • `.revert` - Restore your original profile and remove cloned PFP  
+• `.kang` - Steal stickers/images to your sticker pack  
 """
 
 class Manager:
@@ -62,7 +64,8 @@ class Manager:
         '_spam_manager',
         '_purge_manager',
         '_clone_manager',
-        '_admin_manager'  # Added AdminManager
+        '_admin_manager',
+        '_kang_manager'  # Added KangManager
     )
 
     def __init__(self, client) -> None:
@@ -76,7 +79,8 @@ class Manager:
         self._spam_manager = SpamManager(client)
         self._purge_manager = PurgeManager(client)
         self._clone_manager = CloneManager(client)
-        self._admin_manager = AdminManager(client)  # Initialize AdminManager
+        self._admin_manager = AdminManager(client)
+        self._kang_manager = KangManager(client)  # Initialize KangManager
 
     def start(self) -> None:
         """Starts the Userbot's automations."""
@@ -109,7 +113,7 @@ class Manager:
 
     @property
     def event_handlers(self) -> List[Dict[str, Callable | events.NewMessage]]:
-        """Returns a list of event handlers, including admin commands."""
+        """Returns a list of event handlers, including admin and kang commands."""
         return [
             {'callback': self.ping_command, 'event': events.NewMessage(pattern=constants.PING_COMMAND_REGEX, outgoing=True)},
             {'callback': self.help_command, 'event': events.NewMessage(pattern=constants.HELP_COMMAND_REGEX, outgoing=True)},
@@ -131,4 +135,5 @@ class Manager:
             {'callback': self._admin_manager.unmute_user, 'event': events.NewMessage(pattern=r"\.unmute(?: (\d+))?", outgoing=True)},
             {'callback': self._admin_manager.promote_user, 'event': events.NewMessage(pattern=r"\.promote(?: (\d+))?", outgoing=True)},
             {'callback': self._admin_manager.demote_user, 'event': events.NewMessage(pattern=r"\.demote(?: (\d+))?", outgoing=True)},
+            {'callback': self._kang_manager.kang, 'event': events.NewMessage(pattern=r"\.kang(?: .+)?", outgoing=True)},  # Added Kang Command
         ]
