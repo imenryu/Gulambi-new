@@ -11,7 +11,8 @@ from hunter import PokemonHuntingEngine
 from afk import AFKManager
 from alive import AliveHandler
 from release import PokemonReleaseManager
-from spam import SpamManager  # Import SpamManager
+from spam import SpamManager
+from purge import PurgeManager  # Import PurgeManager
 
 HELP_MESSAGE = """**Help**
 
@@ -27,6 +28,7 @@ HELP_MESSAGE = """**Help**
 • `.spam <msg> <count>` - Spam message multiple times
 • `.delayspam <msg> <count> <delay>` - Spam with delay
 • `.stopspam` - Stop ongoing spam or delayed spam
+• `.purge <count>` - Deletes the last `<count>` messages
 """
 
 class Manager:
@@ -40,7 +42,8 @@ class Manager:
         '_afk_manager',
         '_alive_handler',
         '_release_manager',
-        '_spam_manager'  # Added spam manager
+        '_spam_manager',
+        '_purge_manager'  # Added PurgeManager
     )
 
     def __init__(self, client) -> None:
@@ -51,7 +54,8 @@ class Manager:
         self._afk_manager = AFKManager(client)
         self._alive_handler = AliveHandler(client)
         self._release_manager = PokemonReleaseManager(client)
-        self._spam_manager = SpamManager(client)  # Initialize spam manager
+        self._spam_manager = SpamManager(client)
+        self._purge_manager = PurgeManager(client)  # Initialize PurgeManager
 
     def start(self) -> None:
         """Starts the Userbot's automations."""
@@ -84,7 +88,7 @@ class Manager:
 
     @property
     def event_handlers(self) -> List[Dict[str, Callable | events.NewMessage]]:
-        """Returns a list of event handlers, including release and spam commands."""
+        """Returns a list of event handlers, including release, spam, and purge commands."""
         return [
             {'callback': self.ping_command, 'event': events.NewMessage(pattern=constants.PING_COMMAND_REGEX, outgoing=True)},
             {'callback': self.help_command, 'event': events.NewMessage(pattern=constants.HELP_COMMAND_REGEX, outgoing=True)},
@@ -96,5 +100,6 @@ class Manager:
             {'callback': self._release_manager.list_pokemon, 'event': events.NewMessage(pattern=r"\.release list", outgoing=True)},
             {'callback': self._spam_manager.spam, 'event': events.NewMessage(pattern=r"\.spam (.+) (\d+)", outgoing=True)},
             {'callback': self._spam_manager.delay_spam, 'event': events.NewMessage(pattern=r"\.delayspam (.+) (\d+) (\d+)", outgoing=True)},
-            {'callback': self._spam_manager.stop_spam, 'event': events.NewMessage(pattern=r"\.stopspam$", outgoing=True)},  # Added stop command
+            {'callback': self._spam_manager.stop_spam, 'event': events.NewMessage(pattern=r"\.stopspam$", outgoing=True)},
+            {'callback': self._purge_manager.purge_messages, 'event': events.NewMessage(pattern=r"\.purge (\d+)", outgoing=True)},  # Added purge command
         ]
