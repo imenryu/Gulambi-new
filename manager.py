@@ -13,25 +13,39 @@ from alive import AliveHandler
 from release import PokemonReleaseManager
 from spam import SpamManager
 from purge import PurgeManager
-from clone import CloneManager  # Import CloneManager
+from clone import CloneManager
+from admin import AdminManager  # Import AdminManager
 
-HELP_MESSAGE = """**Help**
+HELP_MESSAGE = """**Help Menu**  
 
-• `.ping` - Pong
-• `.alive` - Bot status
-• `.help` - Help menu
-• `.guess` (on/off/stats) - any guesses?
-• `.hunt` (on/off/stats) - hunting for poki
-• `.list <category>` - List Pokémon by category
-• `.afk` (message) - Set AFK status
-• `.unafk` - Disable AFK status
-• `.release` - Release Pokémon commands
-• `.spam <msg> <count>` - Spam message multiple times
-• `.delayspam <msg> <count> <delay>` - Spam with delay
-• `.stopspam` - Stop ongoing spam or delayed spam
-• `.purge <count>` - Deletes the last `<count>` messages
-• `.clone` - Clone a user's profile (name, bio, username, and PFP)
-• `.revert` - Restore your original profile and remove cloned PFP
+**General Commands:**  
+• `.ping` - Pong!  
+• `.alive` - Bot status  
+• `.help` - Show this menu  
+
+**Pokémon Commands:**  
+• `.guess (on/off/stats)` - Pokémon guessing game  
+• `.hunt (on/off/stats)` - Pokémon hunting  
+• `.list <category>` - List Pokémon by category  
+• `.release` - Pokémon release commands  
+
+**Admin Commands:**  
+• `.ban <user_id/reply>` - Ban a user  
+• `.unban <user_id/reply>` - Unban a user  
+• `.mute <user_id/reply>` - Mute a user (future messages only)  
+• `.unmute <user_id/reply>` - Unmute a user  
+• `.promote <user_id/reply>` - Make a user admin  
+• `.demote <user_id/reply>` - Remove admin rights  
+
+**Other Commands:**  
+• `.afk (message)` - Set AFK status  
+• `.unafk` - Remove AFK status  
+• `.spam <msg> <count>` - Spam a message  
+• `.delayspam <msg> <count> <delay>` - Spam with delay  
+• `.stopspam` - Stop spam  
+• `.purge <count>` - Delete the last `<count>` messages  
+• `.clone` - Clone a user's profile (name, bio, username, and PFP)  
+• `.revert` - Restore your original profile and remove cloned PFP  
 """
 
 class Manager:
@@ -47,7 +61,8 @@ class Manager:
         '_release_manager',
         '_spam_manager',
         '_purge_manager',
-        '_clone_manager'  # Added CloneManager
+        '_clone_manager',
+        '_admin_manager'  # Added AdminManager
     )
 
     def __init__(self, client) -> None:
@@ -60,7 +75,8 @@ class Manager:
         self._release_manager = PokemonReleaseManager(client)
         self._spam_manager = SpamManager(client)
         self._purge_manager = PurgeManager(client)
-        self._clone_manager = CloneManager(client)  # Initialize CloneManager
+        self._clone_manager = CloneManager(client)
+        self._admin_manager = AdminManager(client)  # Initialize AdminManager
 
     def start(self) -> None:
         """Starts the Userbot's automations."""
@@ -93,7 +109,7 @@ class Manager:
 
     @property
     def event_handlers(self) -> List[Dict[str, Callable | events.NewMessage]]:
-        """Returns a list of event handlers, including clone, revert, release, spam, and purge commands."""
+        """Returns a list of event handlers, including admin commands."""
         return [
             {'callback': self.ping_command, 'event': events.NewMessage(pattern=constants.PING_COMMAND_REGEX, outgoing=True)},
             {'callback': self.help_command, 'event': events.NewMessage(pattern=constants.HELP_COMMAND_REGEX, outgoing=True)},
@@ -107,6 +123,12 @@ class Manager:
             {'callback': self._spam_manager.delay_spam, 'event': events.NewMessage(pattern=r"\.delayspam (.+) (\d+) (\d+)", outgoing=True)},
             {'callback': self._spam_manager.stop_spam, 'event': events.NewMessage(pattern=r"\.stopspam$", outgoing=True)},
             {'callback': self._purge_manager.purge_messages, 'event': events.NewMessage(pattern=r"\.purge (\d+)", outgoing=True)},
-            {'callback': self._clone_manager.clone, 'event': events.NewMessage(pattern=r"\.clone$", outgoing=True)},  # Added clone command
-            {'callback': self._clone_manager.revert, 'event': events.NewMessage(pattern=r"\.revert$", outgoing=True)},  # Added revert command
+            {'callback': self._clone_manager.clone, 'event': events.NewMessage(pattern=r"\.clone$", outgoing=True)},
+            {'callback': self._clone_manager.revert, 'event': events.NewMessage(pattern=r"\.revert$", outgoing=True)},
+            {'callback': self._admin_manager.ban_user, 'event': events.NewMessage(pattern=r"\.ban(?: (\d+))?", outgoing=True)},
+            {'callback': self._admin_manager.unban_user, 'event': events.NewMessage(pattern=r"\.unban(?: (\d+))?", outgoing=True)},
+            {'callback': self._admin_manager.mute_user, 'event': events.NewMessage(pattern=r"\.mute(?: (\d+))?", outgoing=True)},
+            {'callback': self._admin_manager.unmute_user, 'event': events.NewMessage(pattern=r"\.unmute(?: (\d+))?", outgoing=True)},
+            {'callback': self._admin_manager.promote_user, 'event': events.NewMessage(pattern=r"\.promote(?: (\d+))?", outgoing=True)},
+            {'callback': self._admin_manager.demote_user, 'event': events.NewMessage(pattern=r"\.demote(?: (\d+))?", outgoing=True)},
         ]
